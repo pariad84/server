@@ -55,8 +55,7 @@ through another resource's URL.
 ## `/api/resources` -- the definitions
 
 `GET /api/resources` returns every definition, `GET /api/resources/:resource` one of them (or
-`404`). A definition is `src/resources/<key>.json`, read once at boot -- a malformed one fails the
-boot rather than the first request that reaches it:
+`404`). A definition is `src/resources/<key>.json`:
 
 ```json
 {
@@ -89,6 +88,22 @@ column. `POST`/`PUT` bodies are checked against it and answer `400` listing ever
 
 Browsers submit every input as a string, so `number` and `checkbox` are coerced to their real
 types before storage, and a blank optional field is dropped rather than stored as `""`.
+
+### Reloading
+
+`src/resources/` is watched, so adding, editing or removing a resource takes effect on the next
+request -- no restart. Adding a resource end to end is one file: the API starts serving it, and
+fn's console renders a CRUD screen for it on reload.
+
+Boot and reload treat a bad definition differently, on purpose. At boot a malformed definition
+fails the boot, rather than the first request that happens to reach it. A reload cannot do that --
+a file caught half-written by the watcher would take a running server down -- so it logs the
+problem and leaves the definitions already serving in place, then picks the file up again once it
+is saved correctly. Replacing them is synchronous, so a request in flight sees either the whole old
+set or the whole new one.
+
+Set `RESOURCES_WATCH=false` to turn watching off. Filesystems that cannot watch are logged at
+startup and the server runs on with what it read at boot.
 
 ### CORS
 
