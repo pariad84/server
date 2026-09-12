@@ -25,6 +25,23 @@ npm run prisma:migrate
 npm run dev
 ```
 
+## Tests
+
+```sh
+npm test          # DATABASE_URL must point at a database the migrations have been applied to
+```
+
+`validateData` and `resource.service` are tested on their own -- the second against fixture
+directories via `RESOURCES_DIR`, including the watcher. The API tests run against a real
+PostgreSQL rather than a mock: the row store is a `jsonb` column and the resource isolation is a
+query, and a mock would not tell the truth about either. The files share one database, so they run
+serially.
+
+`tests/contract.test.js` holds this server to the contract [fn](https://github.com/pariad84/fn)'s
+`fn.data.remote.js` is written against, mirroring the table in that repo's `tests/contract.js`. fn
+checks it sends those requests; this checks they are answered. If either repo moves, one of the
+suites goes red instead of the console quietly breaking.
+
 ## `/api/users`
 
 `GET /api/users`, `GET /api/users/:id`, `POST /api/users` over the `User` model.
