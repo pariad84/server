@@ -1,7 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const DIR = path.join(__dirname, '..', 'resources');
+// Configurable so tests can point at a fixture directory, and so a deployment can keep its
+// definitions outside the bundle.
+const DIR = process.env.RESOURCES_DIR
+  ? path.resolve(process.env.RESOURCES_DIR)
+  : path.join(__dirname, '..', 'resources');
 
 // One save can fire several filesystem events, and an editor may write through a temp file, so a
 // burst is left to settle before it is read.
@@ -54,20 +58,25 @@ const reload = () => {
 // Adding, editing or removing a resource takes effect without a restart. Set RESOURCES_WATCH to
 // false to turn it off, and note that some filesystems cannot watch at all -- that is logged and
 // the server runs on with whatever it read at boot.
+// Returns the watcher so a caller that owns the process lifecycle -- a test, mainly -- can close
+// it. It is unref'd either way: watching should never be the reason a process stays alive.
 const watchResources = () => {
   if (process.env.RESOURCES_WATCH === 'false') {
-    return;
+    return null;
   }
   let settle;
   try {
-    fs.watch(DIR, () => {
+    const watcher = fs.watch(DIR, () => {
       clearTimeout(settle);
       settle = setTimeout(reload, SETTLE_MS);
       settle.unref();
     });
+    watcher.unref();
     console.log(`Watching ${DIR} for resource definitions`);
+    return watcher;
   } catch (error) {
     console.error(`Resource definitions are not being watched: ${error.message}`);
+    return null;
   }
 };
 
