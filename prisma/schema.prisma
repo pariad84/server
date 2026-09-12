@@ -15,3 +15,17 @@ model User {
 
   @@map("users")
 }
+
+// The row shape fn.data speaks: an id, and whatever the client put in `data`. `resource` is
+// fn.data's `key` -- one table serves every resource, so adding a resource is a client-side
+// definition, not a migration.
+model Record {
+  id        Int      @id @default(autoincrement())
+  resource  String
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resource])
+  @@map("records")
+}
