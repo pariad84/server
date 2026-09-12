@@ -1,0 +1,16 @@
+{
+  "key": "item",
+  "label": "Items",
+  "fields": [
+    { "name": "text", "label": "Text", "required": true, "form": { "type": "text", "placeholder": "Text" } },
+    { "name": "select", "label": "Select", "form": { "type": "select", "datas": [
+      { "value": "option1", "label": "Option 1" },
+      { "value": "option2", "label": "Option 2" }
+    ] } },
+    { "name": "radio", "label": "Radio", "form": { "type": "radio", "datas": [
+      { "value": "radio1", "label": "Radio 1" },
+      { "value": "radio2", "label": "Radio 2" }
+    ] } },
+    { "name": "datetime", "label": "Datetime", "form": { "type": "datetime-local" } }
+  ]
+}

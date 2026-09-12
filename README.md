@@ -9,9 +9,11 @@ src/
   config/db.js         the shared PrismaClient
   routes/              path → controller
   controllers/         request/response shape, validation
-  services/            prisma queries
+  services/            prisma queries, resource definitions
+  resources/           one JSON file per resource -- the definitions themselves
   middlewares/         cors, notFound, error
   utils/asyncHandler   forwards a rejected promise to the error middleware
+  utils/validateData   checks a write against its resource definition
 ```
 
 ## Running it
@@ -42,15 +44,51 @@ default with no changes to any layout or app code.
 | `PUT /api/data/:resource/:id` | body `{ "data": { ... } }` → the updated row, or `404` |
 | `DELETE /api/data/:resource/:id` | the deleted row, or `404` |
 
-A malformed id or a body whose `data` is not an object answers `400`.
+A malformed id answers `400`; a resource with no definition answers `404` on every method.
 
 One `records` table serves every resource -- `resource` is the column holding fn's `key`, and
-`data` is `jsonb` -- so **adding a resource is a client-side field definition, not a migration**.
-The cost is that the database enforces nothing about what is inside `data`; validating a resource's
-shape is the next thing worth building here.
+`data` is `jsonb` -- so **adding a resource is a JSON file, not a migration**.
 
 Every lookup is scoped by `resource` as well as `id`, so an id belonging to one resource is a `404`
 through another resource's URL.
+
+## `/api/resources` -- the definitions
+
+`GET /api/resources` returns every definition, `GET /api/resources/:resource` one of them (or
+`404`). A definition is `src/resources/<key>.json`, read once at boot -- a malformed one fails the
+boot rather than the first request that reaches it:
+
+```json
+{
+  "key": "task",
+  "label": "Tasks",
+  "fields": [
+    { "name": "title",  "label": "Title",  "required": true, "form": { "type": "text" } },
+    { "name": "status", "label": "Status", "required": true, "form": { "type": "select", "datas": [
+      { "value": "todo", "label": "To do" },
+      { "value": "done", "label": "Done" }
+    ] } }
+  ]
+}
+```
+
+`fields` is exactly the array fn's `list` and `form` layouts already take, so **one definition
+drives the browser's columns and inputs and this server's write validation** -- the two cannot
+drift, and fn's `admin.html` renders a full CRUD console for a new resource without a line of code
+changing on either side.
+
+Since `jsonb` enforces nothing itself, that definition is the only thing standing behind the
+column. `POST`/`PUT` bodies are checked against it and answer `400` listing every problem at once:
+
+- a field the definition does not declare
+- a `required` field left blank
+- a `select`/`radio` value outside its `datas`
+- a value that is not a single primitive
+- a `number`/`range` that is not numeric, a `date`/`datetime-local` that is not a date, an `email`
+  that is not one
+
+Browsers submit every input as a string, so `number` and `checkbox` are coerced to their real
+types before storage, and a blank optional field is dropped rather than stored as `""`.
 
 ### CORS
 
