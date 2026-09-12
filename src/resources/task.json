@@ -1,0 +1,18 @@
+{
+  "key": "task",
+  "label": "Tasks",
+  "fields": [
+    { "name": "title", "label": "Title", "required": true, "form": { "type": "text", "placeholder": "What needs doing" } },
+    { "name": "status", "label": "Status", "required": true, "form": { "type": "select", "datas": [
+      { "value": "todo", "label": "To do" },
+      { "value": "doing", "label": "In progress" },
+      { "value": "done", "label": "Done" }
+    ] } },
+    { "name": "priority", "label": "Priority", "form": { "type": "radio", "datas": [
+      { "value": "low", "label": "Low" },
+      { "value": "high", "label": "High" }
+    ] } },
+    { "name": "estimate", "label": "Estimate (h)", "form": { "type": "number" } },
+    { "name": "due", "label": "Due", "form": { "type": "date" } }
+  ]
+}
